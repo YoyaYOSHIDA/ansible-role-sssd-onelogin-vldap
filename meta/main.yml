@@ -12,12 +12,12 @@ galaxy_info:
       versions:
       - all
   galaxy_tags:
-    - "OneLogin"
-    - "CentOS7"
-    - "RHEL7"
-    - "LDAP"
-    - "PAM"
-    - "SSSD"
-    - "VLDAP"
+    - "onelogin"
+    - "centos7"
+    - "rhel7"
+    - "ldap"
+    - "pam"
+    - "sssd"
+    - "vldap" 
 
 dependencies: []
