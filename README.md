@@ -32,10 +32,12 @@ None.
 Example Playbook
 ----------------
 
+```yaml
 - hosts: all
   become: true
   roles:
     - ansible-role-sssd-onelogin-vldap
+```
 
 License
 -------
