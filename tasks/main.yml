@@ -159,4 +159,3 @@
     - oddjobd
   when:
     - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION in ['amazonlinux2', 'centos7', 'redhat7']
-
