@@ -1,0 +1,23 @@
+galaxy_info:
+  author: Yoya YOSHIDA
+  description: Ansible role to setup and enable SSSD client for OneLogin VLDAP(Virtual LDAP)
+  company:
+  license: BSD-3-Clause 
+  min_ansible_version: 2.9
+  platforms:
+    - name: EL
+      versions:
+      - 7
+    - name: "Amazon Linux 2"
+      versions:
+      - all
+  galaxy_tags:
+    - "OneLogin"
+    - "CentOS7"
+    - "RHEL7"
+    - "LDAP"
+    - "PAM"
+    - "SSSD"
+    - "VLDAP"
+
+dependencies: []

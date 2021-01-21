@@ -1,0 +1,22 @@
+---
+# vars file for ansible-role-sssd-onelogin-vldap
+
+# Do NOT edit
+ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION: "{{ (ansible_facts['distribution']~ansible_facts['distribution_major_version'])|lower }}"
+
+# Sub domain of your OneLogin account
+ansible_role_sssd_onelogin_vldap_ONELOGIN_SUBDOMAIN: ""
+
+# gidNumber of your OneLogin account
+# See https://gist.github.com/YoyaYOSHIDA/fdd14c712aa0e308b5a3fd72722a02a0#add-onelogin-gidnumber-to-etc-group
+ansible_role_sssd_onelogin_vldap_ONELOGIN_GIDNUMBER: ""
+
+# Group name counterpart to gidNumber (Define as you want)
+ansible_role_sssd_onelogin_vldap_ONELOGIN_GROUPNAME: ""
+
+# cn of the default bind DN
+# See https://gist.github.com/YoyaYOSHIDA/fdd14c712aa0e308b5a3fd72722a02a0#create-and-edit-sssd-conf
+ansible_role_sssd_onelogin_vldap_PRIVILEGED_USER_CN: ""
+
+# The authentication token of the default bind DN
+ansible_role_sssd_onelogin_vldap_LDAP_DEFAULT_AUTHTOK: ""

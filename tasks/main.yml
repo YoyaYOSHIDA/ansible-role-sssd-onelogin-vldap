@@ -1,0 +1,162 @@
+---
+# tasks file for ansible-role-sssd-onelogin-vldap
+
+- name: Modify ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION in case of AmazonLinux2
+  set_fact:
+    ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION: 'amazonlinux2'
+  when:
+    - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION == 'amazon2'
+
+- name: yum install
+  yum:
+    name:
+      - sssd
+      - sssd-tools
+      - sssd-dbus
+      - oddjob
+      - oddjob-mkhomedir
+      - sssd-client
+      - sssd-ldap
+      - policycoreutils-python
+    state: present
+  when:
+    - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION in ['amazonlinux2', 'centos7', 'redhat7']
+
+- name: Ensure /Users directory exist
+  file:
+    path: /Users
+    state: directory
+  when:
+    - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION in ['amazonlinux2', 'centos7', 'redhat7']
+
+- name: ensure group "{{ ansible_role_sssd_onelogin_vldap_ONELOGIN_GROUPNAME }}" exits
+  group:
+    name: "{{ ansible_role_sssd_onelogin_vldap_ONELOGIN_GROUPNAME }}"
+    gid: "{{ ansible_role_sssd_onelogin_vldap_ONELOGIN_GIDNUMBER }}"
+    state: present
+  when:
+    - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION in ['amazonlinux2', 'centos7', 'redhat7']
+
+- name: Add group "{{ ansible_role_sssd_onelogin_vldap_ONELOGIN_GROUPNAME }}" to sudoers
+  lineinfile:
+    dest: /etc/sudoers
+    insertafter: '^## Same thing without a password'
+    line: "%{{ ansible_role_sssd_onelogin_vldap_ONELOGIN_GROUPNAME }} ALL=(ALL) NOPASSWD: ALL"
+    state: present
+  when:
+    - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION in ['amazonlinux2', 'centos7', 'redhat7']
+
+- name: Edit /etc/ssh/sshd_config
+  replace:
+    path: /etc/ssh/sshd_config
+    regexp: '^PasswordAuthentication no'
+    replace: 'PasswordAuthentication yes'
+    backup: true
+  when:
+    - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION in ['amazonlinux2', 'centos7', 'redhat7']
+
+- name: systemctl restart sshd
+  systemd:
+    name: sshd
+    enabled: yes
+    state: restarted
+  when:
+    - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION in ['amazonlinux2', 'centos7', 'redhat7']
+
+# Dare not to use community.general.sefcontext
+- name: semanage fcontext -a -e /home /Users
+  command: semanage fcontext -a -e /home /Users
+  register: semanage_result
+  ignore_errors: true
+  when:
+    - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION in ['amazonlinux2', 'centos7', 'redhat7']
+
+- name: Notify semanage error
+  pause:
+    prompt: "Make sure semanage fcontext command returned an error."
+  when:
+    - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION in ['amazonlinux2', 'centos7', 'redhat7']
+    - semanage_result.rc != 0
+
+- name: Apply new SELinux file context to filesystem
+  command: restorecon -R -v /Users
+  register: restorecon_result
+  ignore_errors: true
+  when:
+    - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION in ['amazonlinux2', 'centos7', 'redhat7']
+    - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION == 'centos7'
+
+- name: Notify restorecon error
+  pause:
+    prompt: "Make sure restorecon command returned an error."
+  when:
+    - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION in ['amazonlinux2', 'centos7', 'redhat7']
+    - restorecon_result.rc != 0
+
+- name: Ensure /etc/sssd exist
+  file:
+    path: /etc/sssd
+    state: directory
+  when:
+    - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION in ['amazonlinux2', 'centos7', 'redhat7']
+
+- name: Deploy sssd.conf - centos7 or redhat7
+  copy:
+    src: "../templates/centos7_sssd.conf.template"
+    dest: "/etc/sssd/sssd.conf"
+    backup: yes
+  when:
+    - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION in ['centos7', 'redhat7']
+
+- name: Deploy sssd.conf - amazonlinux2
+  copy:
+    src: "../templates/amzn2_sssd.conf.template"
+    dest: "/etc/sssd/sssd.conf"
+    backup: yes
+  when:
+    - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION in ['amazonlinux2']
+
+- name: Edit params - /etc/sssd/sssd.conf
+  replace:
+    path: /etc/sssd/sssd.conf
+    regexp: "{{ item.before }}"
+    replace: "{{ item.after }}"
+    backup: true
+  with_items:
+    - before: 'LDAP_DEFAULT_AUTHTOK_TOBE'
+      after: "{{ ansible_role_sssd_onelogin_vldap_LDAP_DEFAULT_AUTHTOK }}"
+    - before: 'PRIVILEGED_USER_CN_TOBE'
+      after: "{{ ansible_role_sssd_onelogin_vldap_PRIVILEGED_USER_CN }}"
+    - before: 'ONELOGIN_SUBDOMAIN_TOBE'
+      after: "{{ ansible_role_sssd_onelogin_vldap_ONELOGIN_SUBDOMAIN }}"
+  no_log: true
+  when:
+    - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION in ['amazonlinux2', 'centos7', 'redhat7']
+
+- name: Ensure permission of /etc/sssd/sssd.conf is proper
+  file:
+    path: /etc/sssd/sssd.conf
+    state: touch
+    recurse: false
+    owner: root
+    group: root
+    mode: '0600'
+  when:
+    - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION in ['amazonlinux2', 'centos7', 'redhat7']
+
+- name: Execute authconfig
+  shell: authconfig --enablesssd --enablesssdauth --enablelocauthorize --disableldap --disableldapauth --disableldaptls --enablemkhomedir --update
+  when:
+    - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION in ['amazonlinux2', 'centos7', 'redhat7']
+
+- name: sytemctl enable and restart sssd and oddjobd
+  systemd:
+    name: "{{ item }}"
+    enabled: yes
+    state: restarted
+  with_items:
+    - sssd
+    - oddjobd
+  when:
+    - ansible_role_sssd_onelogin_vldap_OS_DISTRIBUTION in ['amazonlinux2', 'centos7', 'redhat7']
+
